@@ -1,14 +1,16 @@
+require('dotenv').config();
+
 const express = require('./config/express');
 const {logger} = require('./config/winston');
 let port;
 
-if (process.env.NODE_ENV === 'development') {
-    port = 3001;
-} else if (process.env.NODE_ENV === 'production') {
-    port = 3002;
+if (process.env['NODE_ENV'] === 'development') {
+    port = process.env["DEV_PORT"];
+} else if (process.env['NODE_ENV'] === 'production') {
+    port = process.env["PROD_PORT"];
 } else {
-    port = 3000;
+    port = process.env["LOCAL_PORT"];
 }
 
 express().listen(port);
-logger.info(`${process.env.NODE_ENV} - API Server Start At Port ${port}`);
+logger.info(`${process.env["NODE_ENV"]} - API Server Start At Port ${port}`);
