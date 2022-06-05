@@ -7,6 +7,4 @@ module.exports = function (app) {
 
     // FD2. 키워드로 장소 검색 API (카카오 API)
     app.get('/app/feeds/area-search-keyword', feed.searchArea);
-
-
 }
