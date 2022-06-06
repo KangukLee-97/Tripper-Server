@@ -113,6 +113,108 @@ async function updateFollow(connection, [status, fromIdx, toIdx]) {
     await connection.query(updateFollowStatusQuery, [status, fromIdx, toIdx]);
 }
 
+/**
+ * selectMyFollowList (userIdx, option)
+ * 내 팔로우 또는 팔로잉 리스트 조회
+ */
+async function selectMyFollowList(connection, [userIdx, option]) {
+    let selectMyFollowListQuery = '';
+    let params;
+
+    if (option === 'following') {
+        selectMyFollowListQuery = `
+            SELECT toIdx, nickName, profileImgUrl,
+             CASE
+               WHEN Follow.status = 'Y' THEN '팔로잉 활성화중'
+               WHEN Follow.status = 'N' THEN '팔로잉 비활성화중'
+               END AS followStatus
+      FROM Follow
+             INNER JOIN User
+                        ON Follow.toIdx = User.idx AND User.isWithdraw = 'N'
+      WHERE Follow.fromIdx = ? AND Follow.status = 'Y'
+      ORDER BY Follow.createdAt;    
+        `;
+        params = userIdx;
+    } else if (option === 'follower') {
+        selectMyFollowListQuery = `
+            SELECT fromIdx, nickName, profileImgUrl,
+             CASE
+               WHEN (A.status IS NULL) OR (A.status = 'N') THEN '팔로잉 비활성화중'
+               WHEN A.status = 'Y' THEN '팔로잉 활성화중'
+               END AS followStatus
+      FROM Follow
+             INNER JOIN User ON Follow.fromIdx = User.idx AND User.isWithdraw = 'N'
+             LEFT JOIN (
+        SELECT toIdx, status
+        FROM Follow
+               INNER JOIN User ON Follow.toIdx = User.idx AND User.isWithdraw = 'N'
+        WHERE Follow.fromIdx = ?
+      ) AS A ON Follow.fromIdx = A.toIdx
+      WHERE Follow.toIdx = ? AND Follow.status = 'Y'
+      ORDER BY Follow.createdAt;    
+        `;
+        params = [userIdx, userIdx];
+    }
+
+    const [selectMyFollowListRow] = await connection.query(selectMyFollowListQuery, params);
+    return selectMyFollowListRow;
+}
+
+/**
+ * selectOtherFollowList (myIdx, userIdx, option)
+ * 상대방 팔로우 또는 팔로잉 리스트 조회
+ */
+async function selectOtherFollowList(connection, [myIdx, userIdx, option]) {
+    let selectOtherFollowQuery = "";
+    let params;
+
+    if (option === 'following') {
+        selectOtherFollowQuery = `
+      SELECT Follow.toIdx, nickName, profileImgUrl,
+             CASE
+               WHEN Follow.toIdx = ? THEN '자기 자신'
+               WHEN (A.status IS NULL) OR (A.status = 'N') THEN '팔로잉 비활성화중'
+               WHEN A.status = 'Y' THEN '팔로잉 활성화중'
+               END AS followStatus
+      FROM Follow
+             INNER JOIN User ON Follow.toIdx = User.idx AND User.isWithdraw = 'N'
+             LEFT JOIN (
+        SELECT toIdx, status
+        FROM Follow
+               INNER JOIN User ON Follow.toIdx = User.idx AND User.isWithdraw = 'N'
+        WHERE Follow.fromIdx = ?
+      ) AS A ON A.toIdx = Follow.toIdx
+      WHERE Follow.fromIdx = ? AND Follow.status = 'Y'
+      ORDER BY Follow.createdAt;
+    `;
+        params = [myIdx, myIdx, userIdx];
+    } else {
+        selectOtherFollowQuery = `
+      SELECT Follow.fromIdx, nickName, profileImgUrl,
+             CASE
+               WHEN Follow.fromIdx = ? THEN '자기 자신'
+               WHEN (A.status IS NULL) OR (A.status = 'N') THEN '팔로잉 비활성화중'
+               WHEN A.status = 'Y' THEN '팔로잉 활성화중'
+               END AS followStatus
+      FROM Follow
+             INNER JOIN User ON Follow.fromIdx = User.idx AND User.isWithdraw = 'N'
+             LEFT JOIN (
+        SELECT toIdx, status
+        FROM Follow
+               INNER JOIN User ON Follow.toIdx = User.idx AND User.isWithdraw = 'N'
+        WHERE Follow.fromIdx = ?
+      ) AS A ON A.toIdx = Follow.fromIdx
+      WHERE Follow.toIdx = ? AND Follow.status = 'Y'
+      ORDER BY Follow.createdAt;
+    `;
+
+        params = [myIdx, myIdx, userIdx];
+    }
+
+    const [selectOtherFollowRow] = await connection.query(selectOtherFollowQuery, params);
+    return selectOtherFollowRow;
+}
+
 module.exports = {
     selectIsUserWithdraw,
     selectIsKakaoIdExist,
@@ -124,5 +226,7 @@ module.exports = {
     selectIsUserExist,
     selectUserFollowStatus,
     insertNewFollow,
-    updateFollow
+    updateFollow,
+    selectMyFollowList,
+    selectOtherFollowList
 }

@@ -202,5 +202,54 @@ exports.followUser = async (req, res) => {
  * query string: option (following/follower)
  */
 exports.followList = async (req, res) => {
+    const myIdx = req.verifiedToken.userIdx;
+    const userIdx = req.params.userIdx;
+    const option = req.query.option;
 
+    const isUserExist = await userProvider.retrieveUserExistCheck(userIdx);
+    const myStatus = await userProvider.retrieveUserWithdrawCheck(myIdx);
+    const otherStatus = await userProvider.retrieveUserWithdrawCheck(userIdx);
+
+    /* Validation */
+    if (!option)   // option을 입력 안했을 경우
+        return res.send(errResponse(baseResponse.FOLLOW_SEARCH_OPTION_EMPTY));
+    if (option !== 'following' && option !== 'follower')   // following또는 follower 입력 안했을경우
+        return res.send(errResponse(baseResponse.FOLLOW_SEARCH_OPTION_ERROR));
+    if (!userIdx)   // 사용자 인덱스 입력 안했을 경우
+        return res.send(errResponse(baseResponse.USER_IDX_EMPTY));
+    if (!isUserExist)   // 존재하지 않는 유저라면
+        return res.send(errResponse(baseResponse.NOT_EXIST_USER));
+    if (myStatus === 'Y' || otherStatus === 'Y')   // 탈퇴한 유저 파악
+        return errResponse(baseResponse.USER_WITHDRAW);
+
+
+    /* Logic 진행 */
+    if (parseInt(userIdx) === parseInt(myIdx)) {   // userIdx와 myIdx가 같다면 본인 팔로잉/팔로워 조회
+        const getMyFollowList = await userProvider.retrieveUserFollowList(myIdx, 'Y', option);
+        if (getMyFollowList.length === 0) {
+            if (option === 'following')
+                return res.send(errResponse(baseResponse.FOLLOWING_SEARCH_NOT_RESULT));
+            else if (option === 'follower')
+                return res.send(errResponse(baseResponse.FOLLOWER_SEARCH_NOT_RESULT));
+        } else {
+            if (option === 'following')
+                return res.send(response(baseResponse.FOLLOWING_LIST_SUCCESS, getMyFollowList));
+            else if (option === 'follower')
+                return res.send(response(baseResponse.FOLLOWER_LIST_SUCCESS, getMyFollowList));
+        }
+    }
+    else {   // 다르면 상대방의 팔로잉, 팔로워 조회
+        const getOtherFollowList = await userProvider.retrieveUserFollowList([userIdx, myIdx], 'N', option);
+        if (getOtherFollowList.length === 0) {
+            if (option === 'following')
+                return res.send(errResponse(baseResponse.FOLLOWING_SEARCH_NOT_RESULT));
+            else if (option === 'follower')
+                return res.send(errResponse(baseResponse.FOLLOWER_SEARCH_NOT_RESULT));
+        } else {
+            if (option === 'following')
+                return res.send(response(baseResponse.FOLLOWING_LIST_SUCCESS, getOtherFollowList));
+            else if (option === 'follower')
+                return res.send(response(baseResponse.FOLLOWER_LIST_SUCCESS, getOtherFollowList));
+        }
+    }
 };

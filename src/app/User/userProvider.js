@@ -48,3 +48,35 @@ exports.retrieveUserInfoByKakaoId = async (kakaoId) => {
     connection.release();
     return retrieveUserInfoByKakaoIdResult;
 };
+
+// 실제로 사용자가 존재하는지 체크
+exports.retrieveUserExistCheck = async (userIdx) => {
+    const connection = await pool.getConnection(async (conn) => conn);
+    const retrieveUserExistCheckResult = (await userDao.selectIsUserExist(connection, userIdx))[0].isUserExist;
+    connection.release();
+    return retrieveUserExistCheckResult;
+};
+
+// 탈퇴한 유저인지 체크
+exports.retrieveUserWithdrawCheck = async (userIdx) => {
+    const connection = await pool.getConnection(async (conn) => conn);
+    const retrieveUserWithdrawCheckResult = (await userDao.selectIsUserWithdraw(connection, userIdx))[0].isWithdraw;
+    connection.release();
+    return retrieveUserWithdrawCheckResult;
+};
+
+// 사용자 팔로워, 팔로잉 리스트 조회
+exports.retrieveUserFollowList = async (userIdx, isMe, search_option) => {
+    const connection = await pool.getConnection(async (conn) => conn);
+
+    if (isMe === 'Y') {   // 본인일 경우
+        const myFollowListResult = await userDao.selectMyFollowList(connection, [userIdx, search_option]);
+        connection.release();
+        return myFollowListResult;
+    }
+    else {   // 상대방일 경우
+        const otherFollowListResult = await userDao.selectOtherFollowList(connection, [userIdx[1], userIdx[0], search_option]);
+        connection.release();
+        return otherFollowListResult;
+    }
+};
