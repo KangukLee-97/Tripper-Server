@@ -174,3 +174,33 @@ exports.autoLogin = async (req, res) => {
     logger.info(`[Auto-Login API] userIdx: ${userIdFromJWT}`);
     return res.send(response(baseResponse.AUTO_LOGIN_SUCCESS));
 };
+
+/**
+ * API FW1: 팔로우 API
+ * [POST] /app/users/follow
+ * headers: JWT Token (x-access-token)
+ * body: toIdx
+ */
+exports.followUser = async (req, res) => {
+    const myIdx = req.verifiedToken.userIdx;   // 본인 인덱스
+    const toIdx = req.body.toIdx;   // 팔로우 요청받는 사람의 인덱스
+
+    if (!toIdx)   // 팔로우 요청 받는 사람의 idx가 없음
+        return res.send(errResponse(baseResponse.FOLLOW_TOIDX_EMPTY));
+    if (myIdx === toIdx)   // 팔로우 요청과 팔로우 요청 받는 사람의 idx가 같으면 안됨!
+        return res.send(errResponse(baseResponse.FOLLOW_IDX_NOT_MATCH));
+
+    const followUserResponse = await userService.createNewFollow(myIdx, toIdx);
+    return res.send(followUserResponse);
+};
+
+/**
+ * API FW2: 팔로잉/팔로워 조회 API
+ * [GET] /app/users/:userIdx/follow-list
+ * headers: JWT Token (x-access-token)
+ * params: userIdx
+ * query string: option (following/follower)
+ */
+exports.followList = async (req, res) => {
+
+};

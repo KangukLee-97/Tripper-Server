@@ -20,4 +20,10 @@ module.exports = function (app) {
 
     // U4. 자동로그인 API
     app.get('/app/users/auto-login', jwtMiddleware, user.autoLogin);
+
+    // FW1. 팔로우 API
+    app.post('/app/users/following', jwtMiddleware, user.followUser);
+
+    // FW2. 팔로잉/팔로워 조회 API
+    app.get('/app/users/:userIdx/follow-list', jwtMiddleware, user.followList);
 };

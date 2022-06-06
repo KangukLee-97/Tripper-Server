@@ -1,9 +1,9 @@
 async function selectIsUserWithdraw(connection, userIdx) {
     const selectUserWithdrawQuery = `
-    SELECT isWithdraw
-    FROM User
-    WHERE User.idx = ?;
-  `;
+        SELECT isWithdraw
+        FROM User
+        WHERE User.idx = ?;
+    `;
     const [selectUserWithdrawRow] = await connection.query(selectUserWithdrawQuery, userIdx);
     return selectUserWithdrawRow;
 }
@@ -62,6 +62,57 @@ async function selectUserInfoByKakaoId(connection, kakaoId) {
     return selectUserInfoByKakaoIdRow;
 }
 
+/**
+ * selectIsUserExist (userIdx)
+ * 실제 존재하는 사용자인지 체크
+ */
+async function selectIsUserExist(connection, userIdx) {
+    const selectIsUserExistQuery = `
+        SELECT EXISTS(SELECT idx FROM User WHERE idx = ? AND isWithdraw = 'N') AS isUserExist;    
+    `;
+    const [selectIsUserExistRow] = await connection.query(selectIsUserExistQuery, userIdx);
+    return selectIsUserExistRow;
+}
+
+/**
+ * selectUserFollowStatus (myIdx, toIdx)
+ * 본인과 상대방의 팔로우 상태 조회
+ */
+async function selectUserFollowStatus(connection, [myIdx, toIdx]) {
+    const selectUserFollowStatusQuery = `
+        SELECT status
+        FROM Follow
+        WHERE fromIdx = ? AND toIdx = ?;
+    `;
+    const [selectUserFollowStatusRow] = await connection.query(selectUserFollowStatusQuery, [myIdx, toIdx]);
+    return selectUserFollowStatusRow;
+}
+
+/**
+ * insertNewFollow (fromIdx, toIdx)
+ * 새로운 팔로우 관계 생성
+ */
+async function insertNewFollow(connection, [fromIdx, toIdx]) {
+    const insertNewFollowQuery = `
+        INSERT INTO Follow(fromIdx, toIdx)
+        VALUES (?, ?);
+    `;
+    await connection.query(insertNewFollowQuery, [fromIdx, toIdx]);
+}
+
+/**
+ * updateFollow (status, fromIdx, toIdx)
+ * 팔로우 상태 업데이트
+ */
+async function updateFollow(connection, [status, fromIdx, toIdx]) {
+    const updateFollowStatusQuery = `
+        UPDATE Follow
+        SET status = ?
+        WHERE fromIdx = ? AND toIdx = ?;
+    `;
+    await connection.query(updateFollowStatusQuery, [status, fromIdx, toIdx]);
+}
+
 module.exports = {
     selectIsUserWithdraw,
     selectIsKakaoIdExist,
@@ -69,5 +120,9 @@ module.exports = {
     selectUserInfoByUserIdx,
     selectIsNickExist,
     insertNewUser,
-    selectUserInfoByKakaoId
+    selectUserInfoByKakaoId,
+    selectIsUserExist,
+    selectUserFollowStatus,
+    insertNewFollow,
+    updateFollow
 }

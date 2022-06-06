@@ -53,3 +53,45 @@ exports.createUser = async (
         connection.release();
     }
 };
+
+// 팔로우
+exports.createNewFollow = async (myIdx, toIdx) => {
+    const connection = await pool.getConnection(async (conn) => conn);
+
+    try {
+        /* Validation */
+        // 실제로 존재하는 사용자인지 확인하기 (회원탈퇴, 잘못된 인덱스) + 자신은 할필요 없음
+        const isUserExist = (await userDao.selectIsUserExist(connection, toIdx))[0].isUserExist;
+        if (!isUserExist)
+            return errResponse(baseResponse.NOT_EXIST_USER);
+
+        // 회원 탈퇴 유무 체크하기
+        const myStatus = (await userDao.selectIsUserWithdraw(connection, myIdx))[0].isWithdraw;
+        const otherStatus = (await userDao.selectIsUserWithdraw(connection, toIdx))[0].isWithdraw;
+        if (myStatus === 'Y' || otherStatus === 'Y')
+            return errResponse(baseResponse.USER_WITHDRAW);
+
+        // 팔로우 상태에 따라 나누기
+        const followStatusResult = await userDao.selectUserFollowStatus(connection, [myIdx, toIdx]);
+        if (followStatusResult.length === 0 || followStatusResult[0].status === 'N') {   // (1) 서로 팔로우가 아예 안되어있거나 한번 요청했다가 끊은 경우
+            if (followStatusResult.length === 0)    // 처음 팔로우
+                await userDao.insertNewFollow(connection, [myIdx, toIdx]);
+            else   // 한번 팔로우를 해봤음
+                await userDao.updateFollow(connection, ['Y', myIdx, toIdx])
+
+            logger.info(`[Follow API] Follow Success! (${myIdx} -> ${toIdx})`);
+            return response(baseResponse.FOLLOW_SUCCESS);
+        }
+        else {   // (2) 팔로우가 서로 되어있는 상황
+            await userDao.updateFollow(connection, ['N', myIdx, toIdx]);
+            logger.info(`[Follow API] Unfollow Success! (${myIdx} -> ${toIdx})`);
+            return response(baseResponse.UNFOLLOW_SUCCESS);
+        }
+    } catch(err) {
+        logger.error(`App - createNewFollow Service error\n: ${err.message}`);
+        await connection.rollback();
+        return errResponse(baseResponse.DB_ERROR);
+    } finally {
+        connection.release();
+    }
+};
