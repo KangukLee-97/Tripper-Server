@@ -15,4 +15,7 @@ module.exports = function (app) {
     // U2
     // U3. 닉네임 확인 API
     app.get('/app/users/nickname-check', user.checkNickname);
+
+    // U4. 자동로그인 API
+    app.get('/app/users/auto-login', jwtMiddleware, user.autoLogin);
 };

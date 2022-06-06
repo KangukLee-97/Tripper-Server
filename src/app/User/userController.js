@@ -128,3 +128,14 @@ exports.checkNickname = async (req, res) => {
     else
         return res.send(response(baseResponse.NICKNAME_CHECK_SUCCESS));
 };
+
+/**
+ * API U4: 자동로그인 API
+ * [GET] /app/users/auto-login
+ * headers: JWT Token (x-access-token)
+ */
+exports.autoLogin = async (req, res) => {
+    const userIdFromJWT = req.verifiedToken.userIdx;
+    logger.info(`[Auto-Login API] userIdx: ${userIdFromJWT}`);
+    return res.send(response(baseResponse.AUTO_LOGIN_SUCCESS));
+};
