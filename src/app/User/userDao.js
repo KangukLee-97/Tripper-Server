@@ -36,9 +36,18 @@ async function selectUserInfoByUserIdx(connection, userIdx) {
     return selectUserInfoByUserIdxRow;
 }
 
+async function selectIsNickExist(connection, nickname) {
+    const selectIsNickExistQuery = `
+        SELECT EXISTS(SELECT nickName FROM User WHERE nickName = ? AND isWithdraw = 'N') AS isNickExist;
+    `;
+    const [selectIsNickExistRow] = await connection.query(selectIsNickExistQuery, nickname);
+    return selectIsNickExistRow;
+}
+
 module.exports = {
     selectIsUserWithdraw,
     selectIsKakaoIdExist,
     selectUserIdByKakaoId,
-    selectUserInfoByUserIdx
+    selectUserInfoByUserIdx,
+    selectIsNickExist
 }

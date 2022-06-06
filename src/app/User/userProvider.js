@@ -32,3 +32,11 @@ exports.getUserInfoByUserIdx = async (userIdx) => {
     connection.release();
     return getUserInfoByUserIdxResult;
 };
+
+// 닉네임 중복 확인
+exports.retrieveNickCheck = async (nickname) => {
+    const connection = await pool.getConnection(async (conn) => conn);
+    const retrieveNickCheckResult = (await userDao.selectIsNickExist(connection, nickname))[0].isNickExist;
+    connection.release();
+    return retrieveNickCheckResult;
+};

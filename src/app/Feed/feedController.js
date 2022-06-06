@@ -1,6 +1,6 @@
 const secret_key = require('../../../config/secret');
 const baseResponse = require("../../../config/baseResponseStatus");
-const regex = require('../../../config/regex');
+const regex = require('../../../config/regex/regex');
 const { response, errResponse } = require("../../../config/response");
 const axios = require("axios");
 const feedService = require("./feedService");

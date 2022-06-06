@@ -3,17 +3,14 @@ const { logger } = require("../../../config/winston");
 const baseResponse = require("../../../config/baseResponseStatus");
 const secret_key = require('../../../config/secret');
 const s3_multer = require('../../../config/aws_s3/multer');
+const regex = require('../../../config/regex/regex');
+const { checkNickFword } = require('../../../config/regex/fword/fword_regex');
 const userProvider = require('./userProvider');
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 // const passport = require("passport");
 // const KakaoStrategy = require("passport-kakao").Strategy
 
-/**
- * API U1: 카카오 로그인 API
- * [POST] /app/users/kakao-login
- * body: accessToken
- */
 // passport.use('kakao-login', new KakaoStrategy({
 //     clientID: secret_key.KAKAO_REST_KEY,
 //     callbackURL: 'http://localhost:3000/auth/kakao/callback',
@@ -22,6 +19,11 @@ const axios = require("axios");
 //     console.log(profile);
 // }));
 
+/**
+ * API U1: 카카오 로그인 API
+ * [POST] /app/users/kakao-login
+ * body: accessToken
+ */
 exports.kakaoLogin = async (req, res) => {
     let user_kakao_profile;
     const accessToken = req.body.accessToken;
@@ -102,4 +104,27 @@ exports.kakaoLogin = async (req, res) => {
             'ageGroup': ageGroup,
             'gender': gender
         }));
+};
+
+/**
+ * API U3: 닉네임 확인 API
+ * [GET] /app/users/nickname-check
+ * query string: nickname
+ */
+exports.checkNickname = async (req, res) => {
+    const nickName = req.query.nickname;
+
+    /* Validation */
+    if (!nickName)   // 닉네임 입력 유무 체크
+        return res.send(errResponse(baseResponse.NICKNAME_EMPTY));
+    if (!(regex.regex_nickname.test(nickName)) || nickName.length > 10 || nickName.length < 2)   // 닉네임 길이, 규칙 (한글,영어,숫자 포함 2자 이상 10자 이내)
+        return res.send(errResponse(baseResponse.NICKNAME_ERROR_TYPE));
+    if (checkNickFword(nickName))   // 닉네임에 부적절한 내용 포함되어 있는지
+        return res.send(errResponse(baseResponse.NICKNAME_BAD_WORD));
+
+    const isNicknameDuplicate = await userProvider.retrieveNickCheck(nickName);   // 닉네임 중복 체크
+    if (isNicknameDuplicate === 1)
+        return res.send(errResponse(baseResponse.REDUNDANT_NICKNAME));
+    else
+        return res.send(response(baseResponse.NICKNAME_CHECK_SUCCESS));
 };

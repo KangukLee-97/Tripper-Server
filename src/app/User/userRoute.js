@@ -11,4 +11,8 @@ module.exports = function (app) {
     // app.get('/auth/kakao/callback', passport.authenticate('kakao-login', {
     //     failureRedirect : '/',   // kakaoStrategy에서 실패한다면 실행
     // }), (req, res) => { res.redirect('/'); });   // 성공한다면 콜백 실행
+
+    // U2
+    // U3. 닉네임 확인 API
+    app.get('/app/users/nickname-check', user.checkNickname);
 };
