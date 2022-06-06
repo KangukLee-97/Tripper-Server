@@ -215,6 +215,19 @@ async function selectOtherFollowList(connection, [myIdx, userIdx, option]) {
     return selectOtherFollowRow;
 }
 
+/**
+ * updateUserStatusToWithdraw (userIdx)
+ * 사용자 status 탈퇴 상태로 바꾸기
+ */
+async function updateUserStatusToWithdraw(connection, userIdx) {
+    const updateUserStatusToWithdrawQuery = `
+        UPDATE User
+        SET isWithdraw = 'Y', kakaoId = 0
+        WHERE User.idx = ?;
+  `;
+    await connection.query(updateUserStatusToWithdrawQuery, userIdx);
+}
+
 module.exports = {
     selectIsUserWithdraw,
     selectIsKakaoIdExist,
@@ -228,5 +241,6 @@ module.exports = {
     insertNewFollow,
     updateFollow,
     selectMyFollowList,
-    selectOtherFollowList
+    selectOtherFollowList,
+    updateUserStatusToWithdraw
 }

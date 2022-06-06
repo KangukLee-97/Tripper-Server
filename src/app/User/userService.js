@@ -95,3 +95,19 @@ exports.createNewFollow = async (myIdx, toIdx) => {
         connection.release();
     }
 };
+
+// 사용자 status 바꾸기
+exports.updateUserWithdraw = async (userIdx) => {
+    const connection = await pool.getConnection(async (conn) => conn);
+
+    try {
+        await userDao.updateUserStatusToWithdraw(connection, userIdx);
+        return response(baseResponse.WITHDRAW_SUCCESS);
+    } catch(err) {
+        logger.error(`App - updateUserWithdraw Service error\n: ${err.message}`);
+        await connection.rollback();
+        return errResponse(baseResponse.DB_ERROR);
+    } finally {
+        connection.release();
+    }
+};

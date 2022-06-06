@@ -21,6 +21,9 @@ module.exports = function (app) {
     // U4. 자동로그인 API
     app.get('/app/users/auto-login', jwtMiddleware, user.autoLogin);
 
+    // U5. 회원탈퇴 API
+    app.patch('/app/users/withdraw', jwtMiddleware, user.kakaoUnlink);
+
     // FW1. 팔로우 API
     app.post('/app/users/following', jwtMiddleware, user.followUser);
 

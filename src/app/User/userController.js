@@ -176,6 +176,42 @@ exports.autoLogin = async (req, res) => {
 };
 
 /**
+ * API U5: 회원탈퇴 API
+ * [PATCH] /app/users/withdraw
+ * headers: JWT Token (x-access-token), accesstoken (kakao)
+ */
+exports.kakaoUnlink = async (req, res) => {
+    const myIdx = req.verifiedToken.userIdx;
+    const accessToken = req.headers.accesstoken;
+
+    const myStatus = await userProvider.retrieveUserWithdrawCheck(myIdx);
+
+    /* Validation */
+    if (!accessToken)
+        return res.send(errResponse(baseResponse.ACCESS_TOKEN_EMPTY));
+    if (myStatus === 'Y')
+        return res.send(errResponse(baseResponse.USER_WITHDRAW));
+
+    // 카카오와 연결끊기 진행 -> 클라이언트에서 JWT 삭제
+    try {
+        await axios({
+            method: 'POST',
+            url: 'https://kapi.kakao.com/v1/user/unlink',
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            }
+        })
+    } catch(err) {
+        return res.send(errResponse(baseResponse.ACCESS_TOKEN_INVALID));
+    }
+
+    // DB에서 status 바꿔주기
+    const updateUserStatusResult = await userService.updateUserWithdraw(myIdx);
+    logger.info(`[WITHDRAW API] Withdraw User: ${myIdx}`);
+    return res.send(updateUserStatusResult);
+};
+
+/**
  * API FW1: 팔로우 API
  * [POST] /app/users/follow
  * headers: JWT Token (x-access-token)
