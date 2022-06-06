@@ -9,8 +9,8 @@ exports.createNewFeed = async (
     myIdx, startDate, endDate, traffic, title,
     introduce, hashtagArr, thumnails, day, dateDiff
 ) => {
-    const connection = await pool.getConnection(async (conn) => conn);
     let travelIdx, dayIdxArr, dayAreaIdx, tagIdx;
+    const connection = await pool.getConnection(async (conn) => conn);
 
     try {
         // 1. Travel 테이블에 값을 넣어서 travelIdx 생성

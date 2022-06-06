@@ -12,7 +12,9 @@ module.exports = function (app) {
     //     failureRedirect : '/',   // kakaoStrategy에서 실패한다면 실행
     // }), (req, res) => { res.redirect('/'); });   // 성공한다면 콜백 실행
 
-    // U2
+    // U2. 회원가입 API
+    app.post('/app/users/sign-up', user.signUp);
+
     // U3. 닉네임 확인 API
     app.get('/app/users/nickname-check', user.checkNickname);
 

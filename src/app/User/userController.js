@@ -4,6 +4,7 @@ const baseResponse = require("../../../config/baseResponseStatus");
 const secret_key = require('../../../config/secret');
 const s3_multer = require('../../../config/aws_s3/multer');
 const regex = require('../../../config/regex/regex');
+const userService = require('./userService');
 const { checkNickFword } = require('../../../config/regex/fword/fword_regex');
 const userProvider = require('./userProvider');
 const jwt = require("jsonwebtoken");
@@ -104,6 +105,40 @@ exports.kakaoLogin = async (req, res) => {
             'ageGroup': ageGroup,
             'gender': gender
         }));
+};
+
+/**
+ * API U2: 회원가입 API
+ * [POST] /app/users/sign-up
+ * Body: email, profileImgUrl, kakaoId, ageGroup, gender, nickName
+ */
+exports.signUp = async (req, res) => {
+    // Request 변수
+    let { email, profileImgUrl, kakaoId, ageGroup, gender, nickName } = req.body;
+
+    /* Validation */
+    if (!email)   // 이메일이 없으면
+        return res.send(errResponse(baseResponse.EMAIL_EMPTY));
+    if (!profileImgUrl)   // 프로필 사진 링크가 없으면
+        return res.send(errResponse(baseResponse.PROFILE_IMG_EMPTY));
+    if (!kakaoId)   // 카카오id가 없으면
+        return res.send(errResponse(baseResponse.KAKAO_ID_EMPTY));
+    if (!nickName)   // 닉네임이 없으면
+        return res.send(errResponse(baseResponse.NICKNAME_EMPTY));
+    if (!(regex.regex_nickname.test(nickName)) || nickName.length > 10 || nickName.length < 2)   // 닉네임 길이, 규칙 (한글,영어,숫자 포함 2자 이상 10자 이내)
+        return res.send(errResponse(baseResponse.NICKNAME_ERROR_TYPE));
+    if (checkNickFword(nickName))   // 닉네임에 부적절한 내용 포함되어 있는지
+        return res.send(errResponse(baseResponse.NICKNAME_BAD_WORD));
+
+    const signUpResponse = await userService.createUser(email, profileImgUrl, kakaoId, ageGroup, gender, nickName);
+    const signUpUserInfo = (await userProvider.retrieveUserInfoByKakaoId(kakaoId))[0];
+
+    if (signUpResponse.code === 3002) {
+        logger.error(`[Sign-Up API] Already exist! (kakaoId: ${kakaoId})`);
+        return res.send(response(baseResponse.SIGN_UP_DUPLICATE, signUpUserInfo));
+    } else {
+        return res.send(response(baseResponse.SIGN_UP_SUCCESS, { 'token': signUpResponse.result, 'userInfo': signUpUserInfo }));
+    }
 };
 
 /**

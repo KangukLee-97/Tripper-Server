@@ -117,6 +117,8 @@ module.exports = {
     COMMENT_NOT_PARENT : { "isSuccess": false, "code": 2064, "message": "부모 댓글이 아닙니다." },
 
     PAGE_FINISH : { "isSuccess": false, "code": 2065, "message": "해당 페이지에 조회할 내용이 없습니다." },
+    SIGN_UP_DUPLICATE : { "isSuccess": false, "code": 2066, "message": "이미 가입한 유저입니다." },
+
     // Response error
     REDUNDANT_NICKNAME : { "isSuccess": false, "code": 3001, "message":"중복된 닉네임입니다." },
     USER_ALREADY_SIGNUP : { "isSuccess": false, "code": 3002, "message":"이미 회원가입한 유저입니다." },

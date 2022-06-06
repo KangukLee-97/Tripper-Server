@@ -40,3 +40,11 @@ exports.retrieveNickCheck = async (nickname) => {
     connection.release();
     return retrieveNickCheckResult;
 };
+
+// 카카오ID로 사용자 정보 받아오기
+exports.retrieveUserInfoByKakaoId = async (kakaoId) => {
+    const connection = await pool.getConnection(async (conn) => conn);
+    const retrieveUserInfoByKakaoIdResult = await userDao.selectUserInfoByKakaoId(connection, kakaoId);
+    connection.release();
+    return retrieveUserInfoByKakaoIdResult;
+};

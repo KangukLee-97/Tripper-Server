@@ -44,10 +44,30 @@ async function selectIsNickExist(connection, nickname) {
     return selectIsNickExistRow;
 }
 
+async function insertNewUser(connection, [email, profileImgUrl, kakaoId, age, gender, nickName]) {
+    const insertNewUserQuery = `
+        INSERT INTO User(email, profileImgUrl, kakaoId, ageGroup, gender, nickName)
+        VALUES (?, ?, ?, ?, ?, ?);
+    `;
+    await connection.query(insertNewUserQuery, [email, profileImgUrl, kakaoId, age, gender, nickName]);
+}
+
+async function selectUserInfoByKakaoId(connection, kakaoId) {
+    const selectUserInfoByKakaoIdQuery = `
+        SELECT idx AS userIdx, email, nickName, profileImgUrl, kakaoId, ageGroup, gender
+        FROM User
+        WHERE User.kakaoId = ? AND User.isWithdraw = 'N';   
+    `;
+    const [selectUserInfoByKakaoIdRow] = await connection.query(selectUserInfoByKakaoIdQuery, kakaoId);
+    return selectUserInfoByKakaoIdRow;
+}
+
 module.exports = {
     selectIsUserWithdraw,
     selectIsKakaoIdExist,
     selectUserIdByKakaoId,
     selectUserInfoByUserIdx,
-    selectIsNickExist
+    selectIsNickExist,
+    insertNewUser,
+    selectUserInfoByKakaoId
 }
